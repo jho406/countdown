@@ -7,71 +7,32 @@
 <style>
   html, body { margin: 0; height: 100%; }
   body {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: var(--bg, #fff); color: #000; font-family: system-ui, sans-serif; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff; color: #000; font-family: system-ui, sans-serif; overflow: hidden;
   }
   #t { font-size: 26vw; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
-  #controls { margin-top: 4vh; display: flex; gap: 2vw; }
-  button {
-    font-size: 4vw; padding: 1vh 2.5vw; border: 0; border-radius: 8px;
-    background: #e5e5e5; color: #000; cursor: pointer;
-  }
-  button:hover { background: #d4d4d4; }
-  .hide-controls #controls { display: none; }
 </style>
 </head>
 <body>
 <div id="t">05:00</div>
-<div id="controls">
-  <button onclick="adj(-60)">−1m</button>
-  <button id="go" onclick="toggle()">Start</button>
-  <button onclick="reset()">Reset</button>
-  <button onclick="adj(60)">+1m</button>
-</div>
 <script>
-  // URL params: ?m=minutes  ?s=seconds  ?autostart=1  ?controls=0  ?bg=%23000000
+  // URL params: ?m=minutes&s=seconds (defaults to 5 minutes). Starts on load.
   var params = new URLSearchParams(location.search);
-  var D = (parseFloat(params.get('m')) || 0) * 60 + (parseInt(params.get('s')) || 0) || 300;
-  var left = D, end = null, iv = null;
-  if (params.get('bg')) document.body.style.setProperty('--bg', params.get('bg'));
-  if (params.get('controls') === '0') {
-    document.body.classList.add('hide-controls');
-    document.body.style.cursor = 'pointer';
-    document.getElementById('t').onclick = toggle;
-  }
+  var total = (parseInt(params.get('m')) || 0) * 60 + (parseInt(params.get('s')) || 0) || 300;
+  var end = Date.now() + total * 1000;
+  var timer = document.getElementById('t');
 
-  function f(s) {
-    var m = Math.floor(s / 60), x = s % 60;
-    return String(m).padStart(2, '0') + ':' + String(x).padStart(2, '0');
-  }
-  function draw() {
-    var e = document.getElementById('t');
-    e.textContent = f(left);
-    e.style.color = left === 0 ? '#d00000' : (left <= 60 ? '#c25e00' : '#000');
-  }
-  function stop() {
-    clearInterval(iv); iv = null;
-    document.getElementById('go').textContent = 'Start';
+  function format(seconds) {
+    var minutes = Math.floor(seconds / 60), rest = seconds % 60;
+    return String(minutes).padStart(2, '0') + ':' + String(rest).padStart(2, '0');
   }
   function tick() {
-    left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    draw();
-    if (left === 0) stop();
+    var left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    timer.textContent = format(left);
+    if (left === 0) clearInterval(interval);
   }
-  function toggle() {
-    if (iv) { stop(); return; }
-    if (left === 0) left = D;
-    end = Date.now() + left * 1000;
-    iv = setInterval(tick, 250);
-    document.getElementById('go').textContent = 'Pause';
-  }
-  function reset() { stop(); left = D; draw(); }
-  function adj(n) {
-    if (iv) { end += n * 1000; tick(); }
-    else { D = Math.max(60, D + n); left = D; draw(); }
-  }
-  draw();
-  if (params.get('autostart') === '1') toggle();
+  var interval = setInterval(tick, 250);
+  tick();
 </script>
 </body>
 </html>
