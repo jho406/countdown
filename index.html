@@ -7,32 +7,59 @@
 <style>
   html, body { margin: 0; height: 100%; }
   body {
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center; gap: 3vw;
     background: #fff; color: #000; font-family: system-ui, sans-serif; overflow: hidden;
   }
-  #t { font-size: 26vw; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+  #t { font-size: 22vw; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+  #controls { display: flex; flex-direction: column; gap: 1.5vw; }
+  button {
+    font-size: 2.5vw; padding: 0.8vw 1.8vw; border: 1px solid #000; border-radius: 6px;
+    background: #fff; color: #000; cursor: pointer; font-family: inherit;
+  }
+  button:hover { background: #f0f0f0; }
 </style>
 </head>
 <body>
 <div id="t">05:00</div>
+<div id="controls">
+  <button id="start" onclick="toggle()">Start</button>
+  <button onclick="reset()">Reset</button>
+</div>
 <script>
-  // URL params: ?m=minutes&s=seconds (defaults to 5 minutes). Starts on load.
+  // URL params: ?m=minutes&s=seconds (defaults to 5 minutes).
   var params = new URLSearchParams(location.search);
   var total = (parseInt(params.get('m')) || 0) * 60 + (parseInt(params.get('s')) || 0) || 300;
-  var end = Date.now() + total * 1000;
+  var left = total, end = null, interval = null;
   var timer = document.getElementById('t');
+  var startButton = document.getElementById('start');
 
   function format(seconds) {
     var minutes = Math.floor(seconds / 60), rest = seconds % 60;
     return String(minutes).padStart(2, '0') + ':' + String(rest).padStart(2, '0');
   }
-  function tick() {
-    var left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    timer.textContent = format(left);
-    if (left === 0) clearInterval(interval);
+  function draw() { timer.textContent = format(left); }
+  function stop() {
+    clearInterval(interval);
+    interval = null;
+    startButton.textContent = 'Start';
   }
-  var interval = setInterval(tick, 250);
-  tick();
+  function tick() {
+    left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    draw();
+    if (left === 0) stop();
+  }
+  function toggle() {
+    if (interval) {
+      stop();
+    } else {
+      if (left === 0) left = total;
+      end = Date.now() + left * 1000;
+      interval = setInterval(tick, 250);
+      startButton.textContent = 'Pause';
+    }
+  }
+  function reset() { stop(); left = total; draw(); }
+  draw();
 </script>
 </body>
 </html>
