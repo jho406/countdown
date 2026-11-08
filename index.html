@@ -20,18 +20,21 @@
 </style>
 </head>
 <body>
+<audio id="music" src="https://vocalvideo.com/media/eyJfcmFpbHMiOnsiZGF0YSI6NzAyMywicHVyIjoiYmxvYl9pZCJ9fQ==--d8ea06d69fce865ea4920d87b1823dfbf49a0b7e/Winding%20Road.mp3" loop preload="auto"></audio>
 <div id="t">05:00</div>
 <div id="controls">
   <button id="start" onclick="toggle()">Start</button>
   <button onclick="reset()">Reset</button>
 </div>
 <script>
-  // URL params: ?m=minutes&s=seconds (defaults to 5 minutes).
+  // URL params: ?m=minutes&s=seconds (defaults to 5 minutes), ?music=0 to mute.
   var params = new URLSearchParams(location.search);
   var total = (parseInt(params.get('m')) || 0) * 60 + (parseInt(params.get('s')) || 0) || 300;
   var left = total, end = null, interval = null;
   var timer = document.getElementById('t');
   var startButton = document.getElementById('start');
+  var music = document.getElementById('music');
+  var musicEnabled = params.get('music') !== '0';
 
   function format(seconds) {
     var minutes = Math.floor(seconds / 60), rest = seconds % 60;
@@ -42,6 +45,7 @@
     clearInterval(interval);
     interval = null;
     startButton.textContent = 'Start';
+    music.pause();
   }
   function tick() {
     left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
@@ -56,9 +60,10 @@
       end = Date.now() + left * 1000;
       interval = setInterval(tick, 250);
       startButton.textContent = 'Pause';
+      if (musicEnabled) music.play().catch(function () {});
     }
   }
-  function reset() { stop(); left = total; draw(); }
+  function reset() { stop(); music.currentTime = 0; left = total; draw(); }
   draw();
 </script>
 </body>
