@@ -35,6 +35,7 @@
   var startButton = document.getElementById('start');
   var music = document.getElementById('music');
   var musicEnabled = params.get('music') !== '0';
+  music.volume = 0.5;
 
   function format(seconds) {
     var minutes = Math.floor(seconds / 60), rest = seconds % 60;
